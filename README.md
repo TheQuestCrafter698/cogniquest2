@@ -179,4 +179,48 @@ const styles = (dark) => ({
     maxWidth: '320px',
     fontSize: '0.9rem'
   }
-});
+
+name: Build Android APK
+
+on:
+  push:
+    branches: [ "main" ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Build web app
+        run: npm run build
+
+      - name: Install Capacitor
+        run: npm install @capacitor/core @capacitor/cli
+
+      - name: Init Capacitor
+        run: npx cap init CogniQuest com.cogniquest.app --web-dir=dist
+
+      - name: Add Android
+        run: npx cap add android
+
+      - name: Build Debug APK
+        run: |
+          cd android
+          ./gradlew assembleDebug
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: cogniquest-apk
+          path: android/app/build/outputs/apk/debug/app-debug.apk
